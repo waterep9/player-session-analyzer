@@ -51,13 +51,13 @@ class SessionAnalyzerService {
       .sort((a, b) => Date.parse(b.lastSeenAt) - Date.parse(a.lastSeenAt));
 
     const limit = Math.min(Math.max(Number(filters.limit) || 50, 1), 200);
-    return reports.slice(0, limit).map((report) => localizeSessionReport(report, filters.language));
+    return reports.slice(0, limit).map((report) => localizeSessionReport(report));
   }
 
-  getSession(sessionId, options = {}) {
+  getSession(sessionId) {
     const events = this.bySession.get(sessionId);
     const report = events ? buildSessionReport(events) : null;
-    return localizeSessionReport(report, options.language);
+    return localizeSessionReport(report);
   }
 
   health() {

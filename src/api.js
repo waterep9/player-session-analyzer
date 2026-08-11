@@ -1,7 +1,7 @@
 'use strict';
 
 const { URL } = require('node:url');
-const { labelsFor, normalizeLanguage } = require('./i18n');
+const { labelsFor } = require('./i18n');
 
 function json(res, statusCode, body) {
   res.writeHead(statusCode, {
@@ -30,10 +30,7 @@ function createApiHandler(service) {
       const url = new URL(req.url, 'http://localhost');
 
       if (req.method === 'GET' && url.pathname === '/api/health') {
-        const requestedLanguage = url.searchParams.get('lang') || undefined;
-        if (!requestedLanguage) return json(res, 200, service.health());
-        const language = normalizeLanguage(requestedLanguage);
-        return json(res, 200, { ...service.health(), language, labels: labelsFor(language) });
+        return json(res, 200, { ...service.health(), language: 'zh', labels: labelsFor() });
       }
 
       if (req.method === 'POST' && url.pathname === '/api/events') {
@@ -43,28 +40,21 @@ function createApiHandler(service) {
       }
 
       if (req.method === 'GET' && url.pathname === '/api/sessions') {
-        const requestedLanguage = url.searchParams.get('lang') || undefined;
-        const language = requestedLanguage ? normalizeLanguage(requestedLanguage) : undefined;
         const payload = {
           items: service.listSessions({
             mediaId: url.searchParams.get('mediaId') || undefined,
             status: url.searchParams.get('status') || undefined,
-            limit: url.searchParams.get('limit') || undefined,
-            language
+            limit: url.searchParams.get('limit') || undefined
           })
         };
-        if (language) {
-          payload.language = language;
-          payload.labels = labelsFor(language);
-        }
+        payload.language = 'zh';
+        payload.labels = labelsFor();
         return json(res, 200, payload);
       }
 
       const match = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
       if (req.method === 'GET' && match) {
-        const report = service.getSession(decodeURIComponent(match[1]), {
-          language: url.searchParams.get('lang') || undefined
-        });
+        const report = service.getSession(decodeURIComponent(match[1]));
         return report
           ? json(res, 200, report)
           : json(res, 404, { error: 'session_not_found' });

@@ -1,30 +1,30 @@
-# Player Session Analyzer
+# 播放会话分析器
 
-An append-only playback telemetry service for local development and owned test environments.
+一个基于追加事件日志的播放遥测服务，适用于本地开发和自有测试环境。
 
-## Why this project
+## 项目定位
 
-The existing workspace contains player debugging notes and a local-only userscript. This project turns that context into a small, auditable observability service:
+该项目把播放器调试场景整理成一个可审计的观测服务：
 
 ```text
-player client -> POST /api/events -> JSONL event log -> replayable session aggregate -> query API
+播放器客户端 -> POST /api/events -> JSONL 事件日志 -> 可重放会话聚合 -> 查询 API
 ```
 
-The event log is the source of truth. Reports are derived by replaying events, so the business model is independent from the storage implementation.
+事件日志是事实来源。会话报告通过重放事件生成，因此业务规则与存储实现解耦，后续可以替换为数据库或消息队列。
 
-## Features
+## 功能
 
-- Strict event validation with a fixed event type allowlist.
-- Idempotency by `eventId`.
-- Append-only JSONL persistence with startup replay.
-- Session metrics: completion, watch time, buffering, errors and interaction counts.
-- Simple anomaly flags for high errors, long buffering and early drop-off.
-- HTTP API built only with Node.js standard library.
-- Unit and API tests using the built-in `node:test` runner.
+- 固定事件类型白名单和严格事件校验
+- 基于 `eventId` 的幂等写入
+- 追加式 JSONL 持久化和启动重放
+- 会话指标：完成度、观看时长、缓冲时长、错误数和交互次数
+- 风险标记：错误率较高、缓冲时间过长、早期流失
+- 使用 Node.js 标准库实现 HTTP API
+- 使用内置 `node:test` 提供单元测试和接口测试
 
-## Run
+## 运行
 
-Requires Node.js 18 or newer.
+需要 Node.js 18 或更高版本。
 
 ```powershell
 npm test
@@ -32,11 +32,11 @@ npm run demo
 npm start
 ```
 
-The server listens on `http://localhost:8787` by default. Use `PORT` and `DATA_FILE` to override the defaults.
+服务默认监听 `http://localhost:8787`。可以通过 `PORT` 和 `DATA_FILE` 覆盖默认端口和数据文件路径。
 
 ## API
 
-Ingest one event or a batch:
+写入单个事件或批量事件：
 
 ```powershell
 curl.exe -X POST http://localhost:8787/api/events `
@@ -44,35 +44,20 @@ curl.exe -X POST http://localhost:8787/api/events `
   -d '{"events":[{"eventId":"e-1","sessionId":"s-1","mediaId":"m-1","type":"ended","occurredAt":"2026-08-10T00:00:00Z","positionSec":120,"durationSec":120}]}'
 ```
 
-Query endpoints:
+查询接口：
 
 - `GET /api/health`
 - `GET /api/sessions?mediaId=m-1&status=completed&limit=50`
 - `GET /api/sessions/:sessionId`
 
-## Bilingual mode / 双语模式
+支持事件类型：`play`、`pause`、`seek`、`progress`、`buffer_start`、`buffer_end`、`ended`、`error`。
 
-Add `lang=bilingual` to query endpoints to include English and Chinese labels, status text, flag details and a bilingual summary.
+## 架构说明
 
-在查询接口中加入 `lang=bilingual`，即可同时返回英文和中文的字段标签、状态说明、告警说明和摘要。
+- `src/domain.js` 负责事件校验、排序和会话报告规则
+- `src/service.js` 负责幂等写入和会话索引
+- `src/repository.js` 是持久化边界
+- `src/api.js` 负责 HTTP 请求适配
+- `src/i18n.js` 负责中文标签和报告说明
 
-```powershell
-curl.exe "http://localhost:8787/api/sessions/s-1?lang=bilingual"
-```
-
-Supported values: `en`, `zh`, `bilingual`.
-
-Supported event types: `play`, `pause`, `seek`, `progress`, `buffer_start`, `buffer_end`, `ended`, `error`.
-
-## Architecture notes
-
-`src/domain.js` owns validation, ordering and report rules. `src/service.js` owns idempotent ingestion and session indexing. `src/repository.js` is the persistence boundary. `src/api.js` adapts HTTP requests to the service. This keeps the high-risk rules testable without starting a server.
-
-## GitHub upload
-
-This directory is a standalone Git repository. Configure a remote before pushing:
-
-```powershell
-git remote add origin <your-github-repository-url>
-git push -u origin main
-```
+高风险规则集中在领域层，测试时不需要启动 HTTP 服务。

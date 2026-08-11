@@ -2,7 +2,7 @@
   "name": "player-session-analyzer",
   "version": "1.0.0",
   "private": true,
-  "description": "An append-only playback telemetry service with replayable session analytics.",
+  "description": "基于追加事件日志的播放会话分析服务。",
   "type": "commonjs",
   "main": "src/server.js",
   "scripts": {
