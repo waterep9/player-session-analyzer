@@ -50,6 +50,18 @@ Query endpoints:
 - `GET /api/sessions?mediaId=m-1&status=completed&limit=50`
 - `GET /api/sessions/:sessionId`
 
+## Bilingual mode / 双语模式
+
+Add `lang=bilingual` to query endpoints to include English and Chinese labels, status text, flag details and a bilingual summary.
+
+在查询接口中加入 `lang=bilingual`，即可同时返回英文和中文的字段标签、状态说明、告警说明和摘要。
+
+```powershell
+curl.exe "http://localhost:8787/api/sessions/s-1?lang=bilingual"
+```
+
+Supported values: `en`, `zh`, `bilingual`.
+
 Supported event types: `play`, `pause`, `seek`, `progress`, `buffer_start`, `buffer_end`, `ended`, `error`.
 
 ## Architecture notes

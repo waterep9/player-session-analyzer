@@ -51,3 +51,18 @@ test('filters and sorts session reports', async () => {
   assert.equal(sessions[0].sessionId, 's-new');
   assert.equal(service.getSession('missing'), null);
 });
+
+test('returns bilingual session reports when requested', async () => {
+  const service = new SessionAnalyzerService(new MemoryRepository());
+  await service.ingest([
+    { ...baseEvent, eventId: 'e-1', type: 'play', positionSec: 0 },
+    { ...baseEvent, eventId: 'e-2', type: 'ended', positionSec: 100 }
+  ]);
+
+  const report = service.getSession('s-1', { language: 'bilingual' });
+  assert.equal(report.language, 'bilingual');
+  assert.equal(report.statusLabel.en, 'Completed');
+  assert.equal(report.statusLabel.zh, '已完成');
+  assert.equal(typeof report.summary.en, 'string');
+  assert.equal(typeof report.summary.zh, 'string');
+});

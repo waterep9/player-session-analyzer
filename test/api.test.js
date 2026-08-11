@@ -33,6 +33,12 @@ test('HTTP API accepts events and exposes reports', async (t) => {
   assert.equal(report.status, 200);
   assert.equal((await report.json()).status, 'completed');
 
+  const bilingual = await fetch(`${baseUrl}/api/sessions/api-session?lang=bilingual`);
+  assert.equal(bilingual.status, 200);
+  const bilingualBody = await bilingual.json();
+  assert.equal(bilingualBody.language, 'bilingual');
+  assert.equal(bilingualBody.statusLabel.zh, '已完成');
+
   const missing = await fetch(`${baseUrl}/api/sessions/missing`);
   assert.equal(missing.status, 404);
 });
